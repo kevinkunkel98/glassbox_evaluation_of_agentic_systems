@@ -1,16 +1,19 @@
 #import "@preview/arkheion:0.1.2": arkheion, arkheion-appendices
 
 #show: arkheion.with(
-  title: "Typst Template for arXiv",
+  title: "Automated Component-Level Evaluation of Software Engineering Agents",
   authors: (
-    (name: "Author 1", email: "user@domain.com", affiliation: "Company", orcid: "0000-0000-0000-0000"),
-    (name: "Author 2", email: "user@domain.com", affiliation: "Company"),
+    (
+      name: "Kevin Kunkel",
+      email: "mm21lugi@studserv.uni-leipzig.de",
+      affiliation: "Faculty of Computer Science, University of Leipzig",
+    ),
   ),
   // Insert your abstract after the colon, wrapped in brackets.
   // Example: `abstract: [This is my abstract...]`
-  abstract: lorem(55),
-  keywords: ("First keyword", "Second keyword", "etc."),
-  date: "May 16, 2023",
+  abstract: "Current evaluation of software engineering agents predominantly measures end-to-end task success, providing little insight into where and why agents fail. This work investigates whether individual agent steps can be reliably evaluated using LLM-based judges, without requiring human assessment of every decision. We collect trajectories from SWE-agent on SWE-bench instances and parse them into atomic steps, each characterized by the agent's reasoning, tool call, parameters, and observation. We manually annotate a subset of steps across three evaluation dimensions — tool selection, parameter quality, and step coherence — establishing a ground-truth dataset. Using this dataset, we design and systematically compare prompt variants (zero-shot, few-shot, chain-of-thought) for each dimension, measuring agreement between the LLM judge and human labels via accuracy and Cohen's kappa. Our analysis reveals which dimensions of agent behavior are amenable to automatic evaluation, where LLM judges fail systematically, and what this implies for the scalability of glass-box agent evaluation in software engineering contexts.",
+  keywords: ("Glassbox", "Agentic", "Development", "LLMs"),
+  date: "May 5, 2026",
 )
 #set cite(style: "chicago-author-date")
 #show link: underline
@@ -39,18 +42,17 @@ lengths of right-angled triangle. Then, we know that: $a^2 + b^2 = c^2$
 *Block without numbering:*
 
 #math.equation(block: true, numbering: none, [
-    $
+  $
     sum_(k=1)^n k = (n(n+1)) / 2
-    $
-  ]
-)
+  $
+])
 
 *Block with numbering:*
 
 As shown in @equation.
 
 $
-sum_(k=1)^n k = (n(n+1)) / 2
+  sum_(k=1)^n k = (n(n+1)) / 2
 $ <equation>
 
 *More information:*
@@ -85,12 +87,12 @@ Single citation @Vaswani2017AttentionIA. Multiple citations @Vaswani2017Attentio
     [cell 1], [cell 2],
     [cell 3], [cell 4],
   ),
-  caption: [#lorem(5)]
+  caption: [#lorem(5)],
 ) <table>
 
 #figure(
   image("image.png", width: 30%),
-  caption: [#lorem(7)]
+  caption: [#lorem(7)],
 ) <figure>
 
 *More information*
@@ -134,4 +136,3 @@ Single citation @Vaswani2017AttentionIA. Multiple citations @Vaswani2017Attentio
 == Appendix section
 
 #lorem(100)
-

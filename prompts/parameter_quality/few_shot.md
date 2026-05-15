@@ -3,16 +3,16 @@ You are evaluating a software engineering agent's step. Your task is to judge wh
 ## Examples
 
 **Example 1 (good parameters)**
-Tool: bash
-Parameters: grep -rn "validate_email" /repo/src/
+Tool: grep
+Parameters: -rn "validate_email" /repo/src/
 Thought: I need to find all usages of validate_email.
 Label: {"label": 1, "reasoning": "The grep command is correctly formed with recursive flag, line numbers, and a specific target directory."}
 
 **Example 2 (poor parameters)**
-Tool: str_replace_editor
-Parameters: str_replace\n/repo/models.py\n<<<\n\n>>>\nfixed
-Thought: I need to fix the empty string comparison bug on line 34.
-Label: {"label": 0, "reasoning": "The old_string to replace is empty, which will fail or produce unintended behavior. The parameters don't match the stated goal."}
+Tool: edit
+Parameters: 34:34
+Thought: I need to fix the empty string comparison bug, but I'm not sure of the exact line number.
+Label: {"label": 0, "reasoning": "The agent claims uncertainty about the line number but edits line 34 without first opening the file to verify. The parameters don't match the stated level of confidence."}
 
 **Example 3 (good parameters)**
 Tool: find_file

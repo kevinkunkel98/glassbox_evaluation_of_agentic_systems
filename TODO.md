@@ -2,27 +2,24 @@
 
 ## 1. Get real trajectory data
 
-The code pipeline is ready but has only run on a two-step fixture. You need actual SWE-agent `.traj` files.
+- [x] Download SWE-agent trajectory files — 4 demonstration trajectories of `marshmallow-code/marshmallow-1867` from the SWE-agent GitHub repo (default, cursors, function_calling, xml prompt variants), placed in `data/raw_traces/`
+- [x] Run the parser: 48 steps across 4 files parsed into `data/parsed_traces/`
+- [x] Spot-checked output — `tool`, `thought`, `observation` fields populated correctly
+- [x] Note: trajectories use the old SWE-agent bash-style ACI (`open`, `create`, `edit`, `ls`, `python`, etc.) — prompt templates updated to match this tool set
 
-- [ ] Download SWE-agent trajectory files — either from the SWE-bench leaderboard submissions or by running SWE-agent yourself on a small subset of instances
-- [ ] Place `.traj` files in `data/raw_traces/`
-- [ ] Run the parser and spot-check the output for format surprises:
-  ```bash
-  python src/parse_traces.py --input data/raw_traces/ --output data/parsed_traces/
-  head -n 1 data/parsed_traces/<first>.jsonl | python -m json.tool
-  ```
-- [ ] The `parse_action` logic may need tuning for the real action format — verify `tool` and `parameters` fields look right across a few steps
+**Limitation:** all 4 trajectories solve the same instance with different prompt configs. For a stronger study, source trajectories from ≥5 distinct SWE-bench instances (e.g., by running SWE-agent, or downloading from a leaderboard submission that publishes trajectories).
 
 ## 2. Annotate steps (with inter-rater partner)
 
-Export a shared annotation sheet first:
+Export a shared annotation sheet first (already done — 48 steps, all available):
 ```bash
-python src/export_for_annotation.py \
+python -m src.export_for_annotation \
   --data data/parsed_traces/ \
   --output data/annotations/steps_to_annotate.csv \
-  --sample 80 --seed 42
+  --sample 48 --seed 42
 ```
 
+- [x] `data/annotations/steps_to_annotate.csv` generated (48 steps)
 - [ ] Share `steps_to_annotate.csv` with your partner (Google Sheets works well)
 - [ ] Both of you read `docs/rubric.md` independently before starting
 - [ ] Each annotate the same 80 steps independently — **do not share labels until both are done**
@@ -76,6 +73,6 @@ python src/metrics.py \
 
 ## 6. Housekeeping
 
-- [ ] Add a `.gitignore` entry for `data/raw_traces/` (trajectory files can be large) and `results/` (generated outputs)
-- [ ] Remove the Hinton and Vaswani placeholder entries from `bibliography.bib` — they are unused
+- [x] Add a `.gitignore` entry for `data/raw_traces/` (trajectory files can be large) and `results/` (generated outputs)
+- [x] Remove the Hinton and Vaswani placeholder entries from `bibliography.bib` — they are unused
 - [ ] Consider a second annotator on ~20 steps to get an inter-annotator kappa as a human upper bound

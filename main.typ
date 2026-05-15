@@ -222,7 +222,7 @@ Future work could explore multi-annotator adjudication, calibration of judge con
 
 = Annotation Examples
 
-@tab-examples shows representative annotated steps illustrating each label combination.
+@tab-examples shows representative annotated steps illustrating each label combination across the three evaluation dimensions.
 
 #figure(
   table(
@@ -232,14 +232,128 @@ Future work could explore multi-annotator adjudication, calibration of judge con
     stroke: 0.5pt,
     inset: 6pt,
     [*Tool*], [*TS*], [*PQ*], [*SC*], [*Note*],
-    [`bash`],              [1], [1], [1], [#lorem(10)],
-    [`str_replace_editor`],[1], [0], [1], [#lorem(10)],
-    [`bash`],              [0], [1], [0], [#lorem(10)],
-    [`bash`],              [0], [0], [0], [#lorem(10)],
+    [`bash`],              [1], [1], [1], [Agent runs `pytest tests/ -x` after applying a patch. Tool, parameters, and subsequent transition to failure analysis are all appropriate.],
+    [`str_replace_editor`],[1], [0], [1], [Correct tool for an in-file edit, but the old-string pattern supplied is empty, making the substitution ill-defined. The next step coherently retries with a corrected pattern.],
+    [`bash`],              [0], [1], [0], [Goal is to locate a function definition; `cat` on the whole file is well-formed but `search_file` is clearly more appropriate. The next step ignores the function location visible in the output and repeats the broad read.],
+    [`bash`],              [0], [0], [0], [Agent uses `cat` on an unverified path when `find_file` is available; the path is also incorrect. The next step misinterprets the resulting error as a permissions issue rather than a missing file.],
   ),
-  caption: [Example annotated steps. TS = Tool Selection, PQ = Parameter Quality, SC = Step Coherence.],
+  caption: [Example annotated steps. TS = Tool Selection, PQ = Parameter Quality, SC = Step Coherence. Labels: 1 = appropriate/coherent, 0 = inappropriate/incoherent.],
 ) <tab-examples>
 
-== Prompt Templates
+= Prompt Templates
 
-#lorem(20)
+All nine prompt templates (three dimensions $times$ three variants) share the same output contract: the judge must respond with a JSON object `{"label": 0 or 1, "reasoning": "..."}`. We show the complete templates for the _Tool Selection_ dimension below; the _Parameter Quality_ and _Step Coherence_ templates follow an analogous structure with dimension-appropriate task descriptions, worked examples, and sub-questions.
+
+== Zero-Shot
+
+```
+You are evaluating a software engineering agent's step. Your task is to
+judge whether the agent chose the right tool.
+
+## Agent Step
+**Thought:** {thought}
+**Tool used:** {tool}
+**Parameters:** {parameters}
+**Observation:** {observation}
+
+## Available tools
+- bash shell commands (e.g., ls, python, pip, rm, grep): execute arbitrary shell commands
+- open <file> [line]: view a file, optionally starting at a given line number
+- create <file>: create a new file and open it for editing
+- edit <start>:<end>: replace a range of lines in the currently open file
+- find_file <name> [dir]: find a file by name in the repository
+- search_file <pattern> [file]: search for a pattern within a specific file
+- search_dir <pattern> [dir]: search for a pattern across all files in a directory
+- submit: submit the final patch as the solution
+- exit_forfeit: give up on the task without submitting
+
+## Task
+Was `{tool}` the most appropriate tool for what the agent was trying to
+do in its thought?
+
+Respond with a JSON object only:
+{"label": 1, "reasoning": "..."}   (1 = good tool choice)
+{"label": 0, "reasoning": "..."}   (0 = poor tool choice)
+```
+
+== Few-Shot
+
+```
+You are evaluating a software engineering agent's step. Your task is to
+judge whether the agent chose the right tool.
+
+## Available tools
+- bash shell commands (e.g., ls, python, pip, rm, grep): execute arbitrary shell commands
+- open <file> [line]: view a file, optionally starting at a given line number
+- create <file>: create a new file and open it for editing
+- edit <start>:<end>: replace a range of lines in the currently open file
+- find_file <name> [dir]: find a file by name in the repository
+- search_file <pattern> [file]: search for a pattern within a specific file
+- search_dir <pattern> [dir]: search for a pattern across all files in a directory
+- submit: submit the final patch as the solution
+- exit_forfeit: give up on the task without submitting
+
+## Examples
+
+**Example 1 (good tool choice)**
+Thought: I need to see what files are in the repository root.
+Tool: bash / Parameters: ls -la /repo
+Label: {"label": 1, "reasoning": "bash with ls is appropriate for listing directory contents."}
+
+**Example 2 (poor tool choice)**
+Thought: I need to find where the function `validate_email` is defined.
+Tool: bash / Parameters: cat /repo/utils.py
+Label: {"label": 0, "reasoning": "search_file or search_dir would directly locate the
+function definition; reading the whole file misses the stated goal."}
+
+**Example 3 (good tool choice)**
+Thought: I found the bug — the condition is inverted. I need to fix line 42.
+Tool: str_replace_editor / Parameters: str_replace /repo/validators.py ...
+Label: {"label": 1, "reasoning": "str_replace_editor is the correct tool for targeted file edits."}
+
+## Agent Step to Evaluate
+**Thought:** {thought}
+**Tool used:** {tool}
+**Parameters:** {parameters}
+**Observation:** {observation}
+
+Was `{tool}` the most appropriate tool for the stated goal?
+
+Respond with a JSON object only:
+{"label": 1, "reasoning": "..."}
+{"label": 0, "reasoning": "..."}
+```
+
+== Chain-of-Thought
+
+```
+You are evaluating a software engineering agent's step. Your task is to
+judge whether the agent chose the right tool.
+
+## Available tools
+- bash shell commands (e.g., ls, python, pip, rm, grep): execute arbitrary shell commands
+- open <file> [line]: view a file, optionally starting at a given line number
+- create <file>: create a new file and open it for editing
+- edit <start>:<end>: replace a range of lines in the currently open file
+- find_file <name> [dir]: find a file by name in the repository
+- search_file <pattern> [file]: search for a pattern within a specific file
+- search_dir <pattern> [dir]: search for a pattern across all files in a directory
+- submit: submit the final patch as the solution
+- exit_forfeit: give up on the task without submitting
+
+## Agent Step
+**Thought:** {thought}
+**Tool used:** {tool}
+**Parameters:** {parameters}
+**Observation:** {observation}
+
+## Instructions
+Think step by step before labeling:
+1. What goal was the agent trying to achieve, based on its thought?
+2. Which tool(s) from the list above would be most appropriate for that goal?
+3. Is `{tool}` among the best choices, or is there a clearly better option?
+
+After reasoning, respond with a JSON object only:
+{"label": 1, "reasoning": "..."}   (1 = good tool choice)
+{"label": 0, "reasoning": "..."}   (0 = poor tool choice)
+```

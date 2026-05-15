@@ -1,0 +1,15 @@
+# Claude Code
+.claude/
+docs/superpowers/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Data (large files)
+data/raw_traces/
+results/
+
+# Build output
+main.pdf

@@ -1,0 +1,25 @@
+{
+  "environment": "swe_bench",
+  "trajectory": [
+    {
+      "action": "bash\nls -la /repo",
+      "observation": "total 20\ndrwxr-xr-x 5 root root 4096 Jan 1 00:00 .",
+      "response": "I'll start by exploring.\n```\nbash\nls -la /repo\n```",
+      "state": "{}",
+      "thought": "I'll start by exploring the repository structure."
+    },
+    {
+      "action": "str_replace_editor\nview\n/repo/setup.py",
+      "observation": "Here's the content of /repo/setup.py:\n1 from setuptools import setup",
+      "response": "Let me look at setup.py.\n```\nstr_replace_editor\nview\n/repo/setup.py\n```",
+      "state": "{}",
+      "thought": "Let me look at the setup file."
+    }
+  ],
+  "info": {
+    "instance_id": "django__django-12345",
+    "exit_status": "submitted",
+    "submission": "diff --git a/fix.py b/fix.py",
+    "model_stats": {"total_cost": 0.42}
+  }
+}

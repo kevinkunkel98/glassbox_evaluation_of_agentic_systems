@@ -9,6 +9,7 @@ __pycache__/
 
 # Data (large files)
 data/raw_traces/
+data/external/
 results/
 
 # Build output

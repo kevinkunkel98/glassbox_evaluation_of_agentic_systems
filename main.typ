@@ -1,4 +1,5 @@
 #import "@preview/arkheion:0.1.2": arkheion, arkheion-appendices
+#import "@preview/fletcher:0.5.7": diagram, node, edge
 
 #show: arkheion.with(
   title: "Automated Component-Level Evaluation of Software Engineering Agents",
@@ -11,7 +12,7 @@
   ),
   abstract: "Current evaluation of software engineering agents predominantly measures end-to-end task success, providing little insight into where and why agents fail. This work investigates whether individual agent steps can be reliably evaluated using LLM-based judges, without requiring human assessment of every decision. We collect trajectories from SWE-agent on SWE-bench instances and parse them into atomic steps, each characterized by the agent's reasoning, tool call, parameters, and observation. We manually annotate a subset of steps across three evaluation dimensions — tool selection, parameter quality, and step coherence — establishing a ground-truth dataset. Using this dataset, we design and systematically compare prompt variants (zero-shot, few-shot, chain-of-thought) for each dimension, measuring agreement between the LLM judge and human labels via accuracy and Cohen's kappa. Our analysis reveals which dimensions of agent behavior are amenable to automatic evaluation, where LLM judges fail systematically, and what this implies for the scalability of glass-box agent evaluation in software engineering contexts.",
   keywords: ("Glassbox", "Agentic", "Development", "LLMs"),
-  date: "May 5, 2026",
+  date: "May 16, 2026",
 )
 #set cite(style: "chicago-author-date")
 #show link: underline
@@ -60,7 +61,47 @@ SWE-bench @SWEbench consists of 2,294 task instances sampled from the issue trac
 @fig-pipeline gives an overview of our evaluation pipeline. Raw SWE-agent trajectory files are parsed into a structured representation, a subset is annotated by a human rater, and an LLM judge is queried with multiple prompt variants whose outputs are compared against the human labels.
 
 #figure(
-  image("image.png", width: 80%),
+  diagram(
+    node-stroke: 0.5pt,
+    node-corner-radius: 4pt,
+    spacing: (4em, 2em),
+    node-inset: 8pt,
+
+    node((1,0), [*Raw Trajectories*\ #text(size: 0.85em, [(.traj files)])],
+      fill: rgb("#dbeafe"), name: <traj>),
+
+    node((1,1), [#raw("parse_traces.py")],
+      fill: rgb("#fef3c7"), name: <parse>),
+
+    node((1,2), [*Parsed Steps*\ #text(size: 0.85em, [(.jsonl)])],
+      fill: rgb("#dbeafe"), name: <steps>),
+
+    node((0,3), [Human Annotation\ #text(size: 0.85em, [(2 annotators)])],
+      fill: rgb("#fef3c7"), name: <human>),
+    node((2,3), [LLM Judge\ #text(size: 0.85em, [(3 dims × 3 variants)])],
+      fill: rgb("#fef3c7"), name: <llm>),
+
+    node((0,4), [#raw("labels.csv")\ #text(size: 0.85em, [(ground truth)])],
+      fill: rgb("#dbeafe"), name: <labels>),
+    node((2,4), [#raw("results/*.csv")\ #text(size: 0.85em, [(LLM labels)])],
+      fill: rgb("#dbeafe"), name: <results>),
+
+    node((1,5), [#raw("metrics.py")],
+      fill: rgb("#fef3c7"), name: <metrics>),
+
+    node((1,6), [*Accuracy + Cohen's* $kappa$\ #text(size: 0.85em, [(per dimension × variant)])],
+      fill: rgb("#d1fae5"), name: <output>),
+
+    edge(<traj>, <parse>, "->"),
+    edge(<parse>, <steps>, "->"),
+    edge(<steps>, <human>, "->"),
+    edge(<steps>, <llm>, "->"),
+    edge(<human>, <labels>, "->"),
+    edge(<llm>, <results>, "->"),
+    edge(<labels>, <metrics>, "->"),
+    edge(<results>, <metrics>, "->"),
+    edge(<metrics>, <output>, "->"),
+  ),
   caption: [Overview of the glass-box evaluation pipeline. SWE-agent trajectories are parsed into atomic steps, annotated by human raters, and evaluated by an LLM judge across three prompt variants.],
 ) <fig-pipeline>
 
@@ -233,7 +274,7 @@ Future work could explore multi-annotator adjudication, calibration of judge con
     inset: 6pt,
     [*Tool*], [*TS*], [*PQ*], [*SC*], [*Note*],
     [`bash`],              [1], [1], [1], [Agent runs `pytest tests/ -x` after applying a patch. Tool, parameters, and subsequent transition to failure analysis are all appropriate.],
-    [`str_replace_editor`],[1], [0], [1], [Correct tool for an in-file edit, but the old-string pattern supplied is empty, making the substitution ill-defined. The next step coherently retries with a corrected pattern.],
+    [`edit`],              [1], [0], [1], [Correct tool for an in-file edit, but the line range supplied targets a comment block rather than the actual buggy line. The next step coherently retries with a corrected range.],
     [`bash`],              [0], [1], [0], [Goal is to locate a function definition; `cat` on the whole file is well-formed but `search_file` is clearly more appropriate. The next step ignores the function location visible in the output and repeats the broad read.],
     [`bash`],              [0], [0], [0], [Agent uses `cat` on an unverified path when `find_file` is available; the path is also incorrect. The next step misinterprets the resulting error as a permissions issue rather than a missing file.],
   ),
@@ -308,8 +349,8 @@ function definition; reading the whole file misses the stated goal."}
 
 **Example 3 (good tool choice)**
 Thought: I found the bug — the condition is inverted. I need to fix line 42.
-Tool: str_replace_editor / Parameters: str_replace /repo/validators.py ...
-Label: {"label": 1, "reasoning": "str_replace_editor is the correct tool for targeted file edits."}
+Tool: edit / Parameters: edit 42:42
+Label: {"label": 1, "reasoning": "edit is the correct tool for targeted in-file line replacements."}
 
 ## Agent Step to Evaluate
 **Thought:** {thought}
